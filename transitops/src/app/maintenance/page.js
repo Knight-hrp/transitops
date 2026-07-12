@@ -57,6 +57,15 @@ export default function Maintenance() {
     fetchVehicles();
   }, []);
 
+  // Auto-dismiss success messages after 2 seconds
+  useEffect(() => {
+    if (message.text && message.type === "success") {
+      const t = setTimeout(() => setMessage({ type: "", text: "" }), 2000);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+  }, [message]);
+
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
       const matchesSearch =
@@ -308,18 +317,18 @@ export default function Maintenance() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search vehicle or maintenance..."
-            className="flex-1 rounded-xl border border-slate-300 bg-white px-5 py-3 outline-none focus:border-blue-500"
+            className="flex-1 rounded-xl border border-slate-300 bg-white px-5 py-3 text-slate-700 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-0"
           />
 
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
-            className="rounded-xl border border-slate-300 bg-white px-5 py-3"
+            className="rounded-xl border border-slate-300 bg-white px-5 py-3 text-slate-700"
           >
-            <option>All Status</option>
-            <option>Completed</option>
-            <option>Pending</option>
-            <option>Urgent</option>
+            <option className="text-slate-700">All Status</option>
+            <option className="text-slate-700">Completed</option>
+            <option className="text-slate-700">Pending</option>
+            <option className="text-slate-700">Urgent</option>
           </select>
         </div>
 
