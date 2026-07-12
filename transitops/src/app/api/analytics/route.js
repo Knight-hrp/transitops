@@ -109,8 +109,8 @@ export async function GET() {
                 totalDistance,
                 fuelEfficiency,
                 maintenanceCost: finalMaintenanceCost,
-                totalVehicles,
-                onTripVehicles,
+                totalVehicles: total_vehicles,
+                onTripVehicles: on_trip_vehicles,
             },
             financial: {
                 capex,

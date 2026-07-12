@@ -20,6 +20,7 @@ export default function AnalyticsPage() {
     const [loading, setLoading] = useState(true);
     const [userRole, setUserRole] = useState(null);
     const [authLoading, setAuthLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         fetchUserRole();
@@ -27,6 +28,7 @@ export default function AnalyticsPage() {
 
     async function fetchUserRole() {
         setAuthLoading(true);
+        setError(null);
         try {
             const response = await fetch("/api/auth/me");
             const resData = await response.json();
@@ -42,9 +44,10 @@ export default function AnalyticsPage() {
                 setUserRole(null);
                 setLoading(false);
             }
-        } catch (error) {
-            console.error("Error checking auth role:", error);
+        } catch (err) {
+            console.error("Error checking auth role:", err);
             setUserRole(null);
+            setError("Authentication check failed. Please refresh the page.");
             setLoading(false);
         } finally {
             setAuthLoading(false);
@@ -53,14 +56,18 @@ export default function AnalyticsPage() {
 
     async function fetchAnalytics() {
         setLoading(true);
+        setError(null);
         try {
             const response = await fetch("/api/analytics");
             const resData = await response.json();
             if (resData.success) {
                 setData(resData);
+            } else {
+                setError(resData.message || "Failed to load analytics data.");
             }
-        } catch (error) {
-            console.error("Error fetching analytics data:", error);
+        } catch (err) {
+            console.error("Error fetching analytics data:", err);
+            setError("Something went wrong fetching the analytics insights.");
         } finally {
             setLoading(false);
         }
@@ -128,6 +135,12 @@ export default function AnalyticsPage() {
                         🔄 Refresh Data
                     </button>
                 </div>
+
+                {error && (
+                    <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 text-sm font-medium rounded-lg animate-slide-in">
+                        ⚠️ {error}
+                    </div>
+                )}
 
                 {userRole === "Fleet Manager" ? (
                     /* ============================================================ */
