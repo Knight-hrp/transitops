@@ -26,7 +26,7 @@ export async function PUT(request, { params }) {
       return Response.json({ success: false, message: "Invalid request body", error: error.message }, { status: 400 });
     }
 
-    const { vehicleId, driver, liters, cost, date } = body || {};
+    const { vehicleId, liters, cost, date } = body || {};
     const errors = {};
     const parsedVehicleId = Number(vehicleId || 0);
 
@@ -34,9 +34,6 @@ export async function PUT(request, { params }) {
       errors.vehicleId = "Please select a valid vehicle.";
     }
 
-    if (!driver || !driver.trim()) {
-      errors.driver = "Driver is required.";
-    }
     if (!liters || Number(liters) <= 0) {
       errors.liters = "Liters must be greater than zero.";
     }
@@ -60,14 +57,13 @@ export async function PUT(request, { params }) {
       `
         UPDATE fuel_logs
         SET vehicle_id = $1,
-            driver = $2,
-            liters = $3,
-            cost = $4,
-            date = $5
-        WHERE id = $6
+            liters = $2,
+            cost = $3,
+            date = $4
+        WHERE id = $5
         RETURNING id
       `,
-      [parsedVehicleId, driver.trim(), Number(liters), Number(cost), date, Number(id)]
+      [parsedVehicleId, Number(liters), Number(cost), date, Number(id)]
     );
 
     if (result.rows.length === 0) {

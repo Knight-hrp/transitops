@@ -1,10 +1,9 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 
 const emptyForm = {
   vehicleId: "",
-  driver: "",
   liters: "",
   cost: "",
   date: "",
@@ -47,6 +46,7 @@ export default function FuelLogs() {
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState({ type: "", text: "" });
+  const vehicleRef = useRef(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -68,7 +68,7 @@ export default function FuelLogs() {
       const searchText = search.toLowerCase();
       return (
         log.vehicle.toLowerCase().includes(searchText) ||
-        log.driver.toLowerCase().includes(searchText)
+        String(log.liters).toLowerCase().includes(searchText)
       );
     });
   }, [fuelLogs, search]);
@@ -112,7 +112,6 @@ export default function FuelLogs() {
     setEditingId(log.id);
     setForm({
       vehicleId: log.vehicleId,
-      driver: log.driver,
       liters: String(log.liters),
       cost: String(log.cost),
       date: log.date ? new Date(log.date).toISOString().slice(0, 10) : "",
@@ -141,9 +140,7 @@ export default function FuelLogs() {
     if (!form.vehicleId) {
       nextErrors.vehicleId = "Vehicle is required.";
     }
-    if (!form.driver.trim()) {
-      nextErrors.driver = "Driver is required.";
-    }
+    // driver removed from schema; skip driver validation
     if (!form.liters || Number(form.liters) <= 0) {
       nextErrors.liters = "Liters must be greater than zero.";
     }
@@ -163,6 +160,10 @@ export default function FuelLogs() {
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       setMessage({ type: "error", text: "Please fix the highlighted fields." });
+      if (validationErrors.vehicleId && vehicleRef.current) {
+        vehicleRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        vehicleRef.current.focus && vehicleRef.current.focus();
+      }
       return;
     }
 
@@ -170,7 +171,6 @@ export default function FuelLogs() {
     try {
       const payload = {
         vehicleId: Number(form.vehicleId),
-        driver: form.driver.trim(),
         liters: Number(form.liters),
         cost: Number(form.cost),
         date: form.date,
@@ -190,6 +190,11 @@ export default function FuelLogs() {
       } else {
         setMessage({ type: "error", text: data.message || "Unable to save fuel log." });
         setErrors(data.errors || {});
+        const shouldScroll = (data.errors && data.errors.vehicleId) || (data.message && data.message.toLowerCase().includes("vehicle"));
+        if (shouldScroll && vehicleRef.current) {
+          vehicleRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+          vehicleRef.current.focus && vehicleRef.current.focus();
+        }
       }
     } catch {
       setMessage({ type: "error", text: "Unable to save fuel log." });
@@ -237,17 +242,7 @@ export default function FuelLogs() {
           </button>
         </div>
 
-        {message.text ? (
-          <div
-            className={`mb-6 rounded-2xl border px-4 py-3 text-sm ${
-              message.type === "success"
-                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                : "border-rose-200 bg-rose-50 text-rose-700"
-            }`}
-          >
-            {message.text}
-          </div>
-        ) : null}
+        {/* Top-page message intentionally removed; messages render inside modal when open */}
 
         <div className="mb-8 flex flex-wrap gap-6">
           <div className="min-w-55 flex-1 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -280,7 +275,7 @@ export default function FuelLogs() {
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search vehicle or driver..."
+            placeholder="Search vehicle or liters..."
             className="flex-1 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-slate-700 placeholder:text-slate-400 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
           />
         </div>
@@ -290,7 +285,6 @@ export default function FuelLogs() {
             <thead className="bg-slate-50">
               <tr className="text-left text-sm font-semibold text-slate-600">
                 <th className="px-6 py-5">Vehicle</th>
-                <th className="px-6 py-5">Driver</th>
                 <th className="px-6 py-5">Fuel</th>
                 <th className="px-6 py-5">Amount</th>
                 <th className="px-6 py-5">Date</th>
@@ -300,13 +294,13 @@ export default function FuelLogs() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-10 text-center text-slate-500">
+                  <td colSpan="5" className="px-6 py-10 text-center text-slate-500">
                     Loading fuel logs...
                   </td>
                 </tr>
               ) : filteredLogs.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-10 text-center text-slate-500">
+                  <td colSpan="5" className="px-6 py-10 text-center text-slate-500">
                     No fuel logs found.
                   </td>
                 </tr>
@@ -314,7 +308,6 @@ export default function FuelLogs() {
                 filteredLogs.map((log) => (
                   <tr key={log.id} className="border-t border-slate-100 transition hover:bg-slate-50">
                     <td className="px-6 py-5 font-semibold text-slate-800">⛽ {log.vehicle}</td>
-                    <td className="px-6 py-5 text-slate-600">{log.driver}</td>
                     <td className="px-6 py-5 text-slate-600">{log.liters} L</td>
                     <td className="px-6 py-5 font-semibold text-emerald-600">{formatCurrency(log.cost)}</td>
                     <td className="px-6 py-5 text-slate-600">{formatDate(log.date)}</td>
@@ -372,6 +365,7 @@ export default function FuelLogs() {
                   name="vehicleId"
                   value={form.vehicleId}
                   onChange={handleChange}
+                  ref={vehicleRef}
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-800 outline-none focus:border-indigo-500"
                 >
                   <option value="">Select vehicle</option>
@@ -382,19 +376,20 @@ export default function FuelLogs() {
                   ))}
                 </select>
                 {errors.vehicleId ? <p className="mt-2 text-sm text-rose-600">{errors.vehicleId}</p> : null}
+
+                {message.text && isFormOpen ? (
+                  <div
+                    className={`mt-4 rounded-lg border px-3 py-2 text-sm ${
+                      message.type === "success"
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                        : "border-rose-200 bg-rose-50 text-rose-700"
+                    }`}
+                  >
+                    {message.text}
+                  </div>
+                ) : null}
               </div>
 
-              <div className="md:col-span-2">
-                <label className="mb-2 block text-sm font-medium text-slate-700">Driver</label>
-                <input
-                  name="driver"
-                  value={form.driver}
-                  onChange={handleChange}
-                  placeholder="Driver name"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-800 placeholder:text-slate-400 outline-none focus:border-indigo-500"
-                />
-                {errors.driver ? <p className="mt-2 text-sm text-rose-600">{errors.driver}</p> : null}
-              </div>
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">Liters</label>

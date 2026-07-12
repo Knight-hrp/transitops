@@ -22,7 +22,6 @@ export async function GET() {
         fl.id,
         v.id AS "vehicleId",
         v.vehicle_name AS vehicle,
-        fl.driver,
         fl.liters,
         fl.cost,
         fl.date
@@ -54,16 +53,12 @@ export async function POST(request) {
       return Response.json({ success: false, message: "Invalid request body", error: error.message }, { status: 400 });
     }
 
-    const { vehicleId, driver, liters, cost, date } = body || {};
+    const { vehicleId, liters, cost, date } = body || {};
     const errors = {};
     const parsedVehicleId = Number(vehicleId || 0);
 
     if (!parsedVehicleId || Number.isNaN(parsedVehicleId)) {
       errors.vehicleId = "Please select a valid vehicle.";
-    }
-
-    if (!driver || !driver.trim()) {
-      errors.driver = "Driver is required.";
     }
     if (!liters || Number(liters) <= 0) {
       errors.liters = "Liters must be greater than zero.";
@@ -86,11 +81,11 @@ export async function POST(request) {
 
     const result = await pool.query(
       `
-        INSERT INTO fuel_logs (vehicle_id, driver, liters, cost, date)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO fuel_logs (vehicle_id, liters, cost, date)
+        VALUES ($1, $2, $3, $4)
         RETURNING id
       `,
-      [parsedVehicleId, driver.trim(), Number(liters), Number(cost), date]
+      [parsedVehicleId, Number(liters), Number(cost), date]
     );
 
     return Response.json({ success: true, fuelLog: { id: result.rows[0].id }, message: "Fuel log created successfully." }, { status: 201 });
