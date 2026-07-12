@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id    Int    @id @default(autoincrement())
+  name  String @unique @db.VarChar(50)
+  users User[]
+
+  @@map("roles")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(100)
+  email     String   @unique @db.VarChar(255)
+  password  String   @db.VarChar(255)
+  roleId    Int      @map("role_id")
+  role      Role     @relation(fields: [roleId], references: [id])
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("users")
+}
+
+model Vehicle {
+  id                 Int               @id @default(autoincrement())
+  registrationNumber String            @unique @map("registration_number") @db.VarChar(50)
+  vehicleName        String            @map("vehicle_name") @db.VarChar(100)
+  type               String            @db.VarChar(50)
+  maxLoadCapacity    Decimal           @map("max_load_capacity") @db.Decimal(10, 2)
+  odometer           Decimal           @default(0) @db.Decimal(12, 2)
+  acquisitionCost    Decimal           @default(0) @map("acquisition_cost") @db.Decimal(15, 2)
+  status             String            @default("Available") @db.VarChar(30)
+  region             String?           @db.VarChar(100)
+  createdAt          DateTime          @default(now()) @map("created_at")
+  trips              Trip[]
+  maintenanceLogs    MaintenanceLog[]
+  fuelLogs           FuelLog[]
+  expenses           Expense[]
+
+  @@map("vehicles")
+}
+
+model Driver {
+  id                Int      @id @default(autoincrement())
+  name              String   @db.VarChar(100)
+  licenseNumber     String   @unique @map("license_number") @db.VarChar(100)
+  licenseCategory   String?  @map("license_category") @db.VarChar(50)
+  licenseExpiryDate DateTime @map("license_expiry_date") @db.Date
+  contactNumber     String?  @map("contact_number") @db.VarChar(20)
+  safetyScore       Decimal  @default(100) @map("safety_score") @db.Decimal(5, 2)
+  status            String   @default("Available") @db.VarChar(30)
+  createdAt         DateTime @default(now()) @map("created_at")
+  trips             Trip[]
+
+  @@map("drivers")
+}
+
+model Trip {
+  id              Int        @id @default(autoincrement())
+  source          String     @db.VarChar(255)
+  destination     String     @db.VarChar(255)
+  vehicleId       Int?       @map("vehicle_id")
+  driverId        Int?       @map("driver_id")
+  cargoWeight     Decimal    @map("cargo_weight") @db.Decimal(10, 2)
+  plannedDistance Decimal?   @map("planned_distance") @db.Decimal(10, 2)
+  finalOdometer   Decimal?   @map("final_odometer") @db.Decimal(12, 2)
+  fuelConsumed    Decimal?   @map("fuel_consumed") @db.Decimal(10, 2)
+  revenue         Decimal    @default(0) @db.Decimal(15, 2)
+  status          String     @default("Draft") @db.VarChar(30)
+  createdAt       DateTime   @default(now()) @map("created_at")
+  vehicle         Vehicle?   @relation(fields: [vehicleId], references: [id])
+  driver          Driver?    @relation(fields: [driverId], references: [id])
+  fuelLogs        FuelLog[]
+  expenses        Expense[]
+
+  @@map("trips")
+}
+
+model MaintenanceLog {
+  id              Int       @id @default(autoincrement())
+  vehicleId       Int       @map("vehicle_id")
+  maintenanceType String    @map("maintenance_type") @db.VarChar(100)
+  description     String?
+  cost            Decimal   @default(0) @db.Decimal(15, 2)
+  status          String    @default("Active") @db.VarChar(30)
+  startDate       DateTime  @default(now()) @map("start_date") @db.Date
+  endDate         DateTime? @map("end_date") @db.Date
+  createdAt       DateTime  @default(now()) @map("created_at")
+  vehicle         Vehicle   @relation(fields: [vehicleId], references: [id])
+
+  @@map("maintenance_logs")
+}
+
+model FuelLog {
+  id        Int      @id @default(autoincrement())
+  vehicleId Int      @map("vehicle_id")
+  tripId    Int?     @map("trip_id")
+  liters    Decimal  @db.Decimal(10, 2)
+  cost      Decimal  @db.Decimal(15, 2)
+  date      DateTime @default(now()) @db.Date
+  createdAt DateTime @default(now()) @map("created_at")
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id])
+  trip      Trip?    @relation(fields: [tripId], references: [id])
+
+  @@map("fuel_logs")
+}
+
+model Expense {
+  id          Int      @id @default(autoincrement())
+  vehicleId   Int      @map("vehicle_id")
+  tripId      Int?     @map("trip_id")
+  expenseType String   @map("expense_type") @db.VarChar(100)
+  amount      Decimal  @db.Decimal(15, 2)
+  description String?
+  date        DateTime @default(now()) @db.Date
+  createdAt   DateTime @default(now()) @map("created_at")
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id])
+  trip        Trip?    @relation(fields: [tripId], references: [id])
+
+  @@map("expenses")
+}
