@@ -1,11 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import AppNav from "@/components/AppNav";
-import { MOCK_DRIVERS, MOCK_VEHICLES } from "@/lib/mock-data";
 
 export default function NewTripPage() {
+  const router = useRouter();
+  const [vehicles, setVehicles] = useState([]);
+  const [drivers, setDrivers] = useState([]);
+  const [loadingOptions, setLoadingOptions] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
   const [form, setForm] = useState({
     source: "",
     destination: "",
@@ -14,15 +20,53 @@ export default function NewTripPage() {
     vehicleId: "",
     driverId: "",
   });
-  const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/vehicles/available").then((r) => r.json()),
+      fetch("/api/drivers/available").then((r) => r.json()),
+    ])
+      .then(([vehicleData, driverData]) => {
+        if (Array.isArray(vehicleData)) setVehicles(vehicleData);
+        if (Array.isArray(driverData)) setDrivers(driverData);
+      })
+      .catch(() => setError("Failed to load available vehicles and drivers."))
+      .finally(() => setLoadingOptions(false));
+  }, []);
 
   function updateField(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
-    setSubmitted(true);
+    setSubmitting(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/trips", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          cargoWeight: Number(form.cargoWeight),
+          plannedDistance: form.plannedDistance
+            ? Number(form.plannedDistance)
+            : undefined,
+          vehicleId: form.vehicleId ? Number(form.vehicleId) : undefined,
+          driverId: form.driverId ? Number(form.driverId) : undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create trip.");
+
+      router.push(`/trips/${data.id}`);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -94,53 +138,58 @@ export default function NewTripPage() {
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500">
               Assignment
             </h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block text-sm">
-                <span className="mb-1 block font-medium text-zinc-700">Vehicle</span>
-                <select
-                  required
-                  value={form.vehicleId}
-                  onChange={(e) => updateField("vehicleId", e.target.value)}
-                  className="w-full rounded-lg border border-zinc-300 px-3 py-2"
-                >
-                  <option value="">Select vehicle</option>
-                  {MOCK_VEHICLES.map((vehicle) => (
-                    <option key={vehicle.id} value={vehicle.id}>
-                      {vehicle.vehicleName} ({vehicle.maxLoadCapacity} kg)
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="block text-sm">
-                <span className="mb-1 block font-medium text-zinc-700">Driver</span>
-                <select
-                  required
-                  value={form.driverId}
-                  onChange={(e) => updateField("driverId", e.target.value)}
-                  className="w-full rounded-lg border border-zinc-300 px-3 py-2"
-                >
-                  <option value="">Select driver</option>
-                  {MOCK_DRIVERS.map((driver) => (
-                    <option key={driver.id} value={driver.id}>
-                      {driver.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
+            {loadingOptions ? (
+              <p className="text-sm text-zinc-600">Loading available fleet…</p>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block text-sm">
+                  <span className="mb-1 block font-medium text-zinc-700">Vehicle</span>
+                  <select
+                    required
+                    value={form.vehicleId}
+                    onChange={(e) => updateField("vehicleId", e.target.value)}
+                    className="w-full rounded-lg border border-zinc-300 px-3 py-2"
+                  >
+                    <option value="">Select vehicle</option>
+                    {vehicles.map((vehicle) => (
+                      <option key={vehicle.id} value={vehicle.id}>
+                        {vehicle.vehicleName} ({vehicle.maxLoadCapacity} kg)
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block text-sm">
+                  <span className="mb-1 block font-medium text-zinc-700">Driver</span>
+                  <select
+                    required
+                    value={form.driverId}
+                    onChange={(e) => updateField("driverId", e.target.value)}
+                    className="w-full rounded-lg border border-zinc-300 px-3 py-2"
+                  >
+                    <option value="">Select driver</option>
+                    {drivers.map((driver) => (
+                      <option key={driver.id} value={driver.id}>
+                        {driver.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            )}
           </section>
 
-          {submitted && (
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-              Trip form submitted (mock). Database integration comes in the next phase.
+          {error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
             </div>
           )}
 
           <button
             type="submit"
-            className="rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-800"
+            disabled={submitting || loadingOptions}
+            className="rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60"
           >
-            Create Trip
+            {submitting ? "Creating…" : "Create Trip"}
           </button>
         </form>
       </main>
