@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import AppNav from "@/components/AppNav";
 import StatusBadge from "@/components/StatusBadge";
-import { applyMockTripAction } from "@/lib/mock-data";
 
 export default function TripDetailPage() {
   const { id } = useParams();
+  const router = useRouter();
   const [trip, setTrip] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState("");
@@ -35,22 +35,25 @@ export default function TripDetailPage() {
     loadTrip();
   }, [loadTrip]);
 
-  function runAction(action) {
+  async function runAction(action) {
     if (!trip) return;
     setActionLoading(action);
     setError("");
     setNotice("");
 
-    const result = applyMockTripAction(trip, action);
-    if (result.error) {
-      setError(result.error);
-    } else {
-      setTrip(result.trip);
-      setNotice(
-        `Trip ${action} preview applied in UI only. Database status sync arrives in the next phase.`,
-      );
+    try {
+      const res = await fetch(`/api/trips/${id}/${action}`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `Failed to ${action} trip.`);
+
+      setTrip(data);
+      setNotice(`Trip ${action} saved to the database.`);
+      router.refresh();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setActionLoading("");
     }
-    setActionLoading("");
   }
 
   const canDispatch = trip?.status === "Draft";
