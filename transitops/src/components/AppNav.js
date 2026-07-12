@@ -11,6 +11,7 @@ const PAGE_LINKS = {
   new_trip: { href: "/trips/new", label: "New Trip" },
   vehicles: { href: "/vehicles", label: "Vehicles" },
   drivers: { href: "/drivers", label: "Drivers" },
+  safety: { href: "/safety", label: "Safety & Compliance" },
   maintenance: { href: "/maintenance", label: "Maintenance" },
   fuel: { href: "/fuel", label: "Fuel" },
   expenses: { href: "/expenses", label: "Expenses" },
