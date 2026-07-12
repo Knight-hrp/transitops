@@ -15,6 +15,7 @@ const PAGE_LINKS = {
   maintenance: { href: "/maintenance", label: "Maintenance" },
   fuel: { href: "/fuel", label: "Fuel" },
   expenses: { href: "/expenses", label: "Expenses" },
+  analytics: { href: "/analytics", label: "Analytics" },
 };
 
 export default function AppNav() {
