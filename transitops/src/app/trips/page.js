@@ -1,7 +1,7 @@
 import Link from "next/link";
 import AppNav from "@/components/AppNav";
 import StatusBadge from "@/components/StatusBadge";
-import { serializeTrip } from "@/lib/constants";
+import { serializeTrip, TRIP_STATUS } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/api-auth";
 
@@ -9,15 +9,25 @@ export const dynamic = "force-dynamic";
 
 const TRIP_ROLES = ["Dispatcher"];
 
-async function getTrips() {
+const STATUS_FILTERS = [
+  { key: "all", label: "All" },
+  { key: TRIP_STATUS.DRAFT, label: "Draft" },
+  { key: TRIP_STATUS.DISPATCHED, label: "Dispatched" },
+  { key: TRIP_STATUS.IN_PROGRESS, label: "In Progress" },
+  { key: TRIP_STATUS.COMPLETED, label: "Completed" },
+  { key: TRIP_STATUS.CANCELLED, label: "Cancelled" },
+];
+
+async function getTrips(status) {
   const trips = await prisma.trip.findMany({
+    where: status && status !== "all" ? { status } : undefined,
     include: { vehicle: true, driver: true },
     orderBy: { createdAt: "desc" },
   });
   return trips.map(serializeTrip);
 }
 
-export default async function TripsPage() {
+export default async function TripsPage({ searchParams }) {
   const user = await getSessionUser();
 
   if (!user || !TRIP_ROLES.includes(user.role)) {
@@ -48,7 +58,10 @@ export default async function TripsPage() {
     );
   }
 
-  const trips = await getTrips();
+  const params = (await searchParams) ?? {};
+  const activeStatus =
+    typeof params.status === "string" ? params.status : "all";
+  const trips = await getTrips(activeStatus);
 
   return (
     <div className="min-h-screen bg-zinc-50">
@@ -69,15 +82,52 @@ export default async function TripsPage() {
           </Link>
         </div>
 
+        <div className="mb-5 flex flex-wrap gap-2">
+          {STATUS_FILTERS.map((filter) => {
+            const isActive = activeStatus === filter.key;
+            const href =
+              filter.key === "all" ? "/trips" : `/trips?status=${filter.key}`;
+            return (
+              <Link
+                key={filter.key}
+                href={href}
+                className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
+                  isActive
+                    ? "bg-zinc-900 text-white"
+                    : "border border-zinc-300 bg-white text-zinc-600 hover:border-zinc-400"
+                }`}
+              >
+                {filter.label}
+              </Link>
+            );
+          })}
+        </div>
+
         {trips.length === 0 ? (
           <div className="rounded-xl border border-dashed border-zinc-300 bg-white p-10 text-center">
-            <p className="text-zinc-600">No trips yet.</p>
-            <Link
-              href="/trips/new"
-              className="mt-3 inline-block text-sm font-medium text-zinc-900 hover:underline"
-            >
-              Create your first trip
-            </Link>
+            {activeStatus === "all" ? (
+              <>
+                <p className="text-zinc-600">No trips yet.</p>
+                <Link
+                  href="/trips/new"
+                  className="mt-3 inline-block text-sm font-medium text-zinc-900 hover:underline"
+                >
+                  Create your first trip
+                </Link>
+              </>
+            ) : (
+              <>
+                <p className="text-zinc-600">
+                  No trips with status &ldquo;{activeStatus}&rdquo;.
+                </p>
+                <Link
+                  href="/trips"
+                  className="mt-3 inline-block text-sm font-medium text-zinc-900 hover:underline"
+                >
+                  View all trips
+                </Link>
+              </>
+            )}
           </div>
         ) : (
           <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
