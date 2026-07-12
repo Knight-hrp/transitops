@@ -50,7 +50,7 @@ export async function validateTripAssignment(
     prisma.vehicle.findUnique({ where: { id: Number(vehicleId) } }),
     prisma.driver.findUnique({ where: { id: Number(driverId) } }),
     prisma.maintenanceLog.findFirst({
-      where: { vehicleId: Number(vehicleId), status: "Active" },
+      where: { vehicleId: Number(vehicleId), NOT: { status: "Completed" } },
     }),
   ]);
 

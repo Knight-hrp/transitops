@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import AppNav from "@/components/AppNav";
@@ -27,26 +27,30 @@ function TripDetail() {
   const [errors, setErrors] = useState([]);
   const [notice, setNotice] = useState("");
 
-  const loadTrip = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    setErrors([]);
-    try {
-      const res = await fetch(`/api/trips/${id}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to load trip.");
-      setTrip(data);
-    } catch (err) {
-      setError(err.message);
-      setTrip(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
-
   useEffect(() => {
-    loadTrip();
-  }, [loadTrip]);
+    let active = true;
+
+    (async () => {
+      try {
+        const res = await fetch(`/api/trips/${id}`);
+        const data = await res.json();
+        if (!active) return;
+        if (!res.ok) throw new Error(data.error || "Failed to load trip.");
+        setTrip(data);
+      } catch (err) {
+        if (active) {
+          setError(err.message);
+          setTrip(null);
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [id]);
 
   async function runAction(action) {
     if (!trip) return;

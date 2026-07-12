@@ -4,8 +4,21 @@ import { serializeVehicle } from "@/lib/constants";
 
 export async function GET() {
   try {
+    const openMaintenance = await prisma.maintenanceLog.findMany({
+      where: { NOT: { status: "Completed" } },
+      select: { vehicleId: true },
+    });
+    const inMaintenanceIds = [
+      ...new Set(openMaintenance.map((log) => log.vehicleId)),
+    ];
+
     const vehicles = await prisma.vehicle.findMany({
-      where: { status: "Available" },
+      where: {
+        status: "Available",
+        ...(inMaintenanceIds.length
+          ? { id: { notIn: inMaintenanceIds } }
+          : {}),
+      },
       orderBy: { vehicleName: "asc" },
     });
 

@@ -51,15 +51,19 @@ function NewTripForm() {
 
   useEffect(() => {
     const weight = Number(form.cargoWeight);
-    if (!weight || weight <= 0) {
-      setRecommendation(null);
-      setAlternatives([]);
-      return;
-    }
-
     let cancelled = false;
-    setRecLoading(true);
+
     const timer = setTimeout(() => {
+      if (cancelled) return;
+
+      if (!weight || weight <= 0) {
+        setRecommendation(null);
+        setAlternatives([]);
+        setRecLoading(false);
+        return;
+      }
+
+      setRecLoading(true);
       fetch(`/api/trips/recommend?cargoWeight=${weight}`)
         .then((r) => r.json())
         .then((data) => {
@@ -76,7 +80,7 @@ function NewTripForm() {
         .finally(() => {
           if (!cancelled) setRecLoading(false);
         });
-    }, 400);
+    }, 300);
 
     return () => {
       cancelled = true;
