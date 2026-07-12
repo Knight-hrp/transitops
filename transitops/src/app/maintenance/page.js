@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 const emptyForm = {
-  vehicleName: "",
+  vehicleId: "",
   maintenanceType: "",
   description: "",
   cost: "",
@@ -141,7 +141,7 @@ export default function Maintenance() {
     resetForm();
     setEditingId(item.id);
     setForm({
-      vehicleName: item.vehicle || "",
+      vehicleId: item.vehicleId || "",
       maintenanceType: item.maintenanceType || "",
       description: item.description || "",
       cost: item.cost ? String(item.cost) : "",
@@ -168,8 +168,8 @@ export default function Maintenance() {
   function validateForm() {
     const nextErrors = {};
 
-    if (!form.vehicleName.trim()) {
-      nextErrors.vehicleName = "Vehicle is required.";
+    if (!form.vehicleId) {
+      nextErrors.vehicleId = "Vehicle is required.";
     }
 
     if (!form.maintenanceType.trim()) {
@@ -207,7 +207,7 @@ export default function Maintenance() {
 
     try {
       const payload = {
-        vehicleName: form.vehicleName.trim(),
+        vehicleId: Number(form.vehicleId),
         maintenanceType: form.maintenanceType.trim(),
         description: form.description.trim(),
         cost: Number(form.cost),
@@ -283,7 +283,7 @@ export default function Maintenance() {
           </button>
         </div>
 
-        {message.text ? (
+        {message.text && !isFormOpen ? (
           <div
             className={`mb-6 rounded-2xl border px-4 py-3 text-sm ${
               message.type === "success"
@@ -430,20 +430,32 @@ export default function Maintenance() {
             <form onSubmit={handleSubmit} className="mt-6 grid gap-4 md:grid-cols-2">
               <div className="md:col-span-2">
                 <label className="mb-2 block text-sm font-medium text-slate-700">Vehicle</label>
-                <input
-                  name="vehicleName"
-                  value={form.vehicleName}
+                <select
+                  name="vehicleId"
+                  value={form.vehicleId}
                   onChange={handleChange}
-                  list="vehicle-options"
-                  placeholder="Enter vehicle name"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-800 placeholder:text-slate-400 outline-none focus:border-blue-500"
-                />
-                <datalist id="vehicle-options">
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-800 outline-none focus:border-blue-500"
+                >
+                  <option value="">Select vehicle</option>
                   {vehicles.map((vehicle) => (
-                    <option key={vehicle.id} value={vehicle.vehicleName} />
+                    <option key={vehicle.id} value={vehicle.id}>
+                      {vehicle.vehicleName}
+                    </option>
                   ))}
-                </datalist>
-                {errors.vehicleName ? <p className="mt-2 text-sm text-rose-600">{errors.vehicleName}</p> : null}
+                </select>
+                {errors.vehicleId ? <p className="mt-2 text-sm text-rose-600">{errors.vehicleId}</p> : null}
+
+                {message.text && isFormOpen ? (
+                  <div
+                    className={`mt-4 rounded-lg border px-3 py-2 text-sm ${
+                      message.type === "success"
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                        : "border-rose-200 bg-rose-50 text-rose-700"
+                    }`}
+                  >
+                    {message.text}
+                  </div>
+                ) : null}
               </div>
 
               <div className="md:col-span-2">

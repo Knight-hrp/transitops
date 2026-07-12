@@ -26,8 +26,7 @@ export async function PUT(request, { params }) {
       return Response.json({ success: false, message: "Invalid request body", error: error.message }, { status: 400 });
     }
 
-    const { vehicleId, maintenanceType, description, cost, status, startDate, endDate } = body || {};
-
+    const { vehicleId, driver, liters, cost, date } = body || {};
     const errors = {};
     const parsedVehicleId = Number(vehicleId || 0);
 
@@ -35,16 +34,17 @@ export async function PUT(request, { params }) {
       errors.vehicleId = "Please select a valid vehicle.";
     }
 
-    if (!maintenanceType || !maintenanceType.trim()) {
-      errors.maintenanceType = "Maintenance type is required.";
+    if (!driver || !driver.trim()) {
+      errors.driver = "Driver is required.";
     }
-
-    if (!cost || Number(cost) <= 0) {
-      errors.cost = "Cost must be greater than zero.";
+    if (!liters || Number(liters) <= 0) {
+      errors.liters = "Liters must be greater than zero.";
     }
-
-    if (!startDate) {
-      errors.startDate = "Start date is required.";
+    if (cost === undefined || cost === null || Number(cost) < 0) {
+      errors.cost = "Cost must be a non-negative number.";
+    }
+    if (!date) {
+      errors.date = "Date is required.";
     }
 
     if (Object.keys(errors).length > 0) {
@@ -56,42 +56,31 @@ export async function PUT(request, { params }) {
       return Response.json({ success: false, message: "Vehicle not found." }, { status: 400 });
     }
 
-    const dup = await pool.query(
-      "SELECT id FROM maintenance_logs WHERE vehicle_id = $1 AND id != $2 AND (status IS NULL OR status != 'Completed') LIMIT 1",
-      [parsedVehicleId, Number(id)]
-    );
-    if (dup.rows.length > 0) {
-      return Response.json({ success: false, message: "Another active maintenance record exists for this vehicle." }, { status: 400 });
-    }
-
     const result = await pool.query(
       `
-        UPDATE maintenance_logs
+        UPDATE fuel_logs
         SET vehicle_id = $1,
-            maintenance_type = $2,
-            description = $3,
+            driver = $2,
+            liters = $3,
             cost = $4,
-            status = $5,
-            start_date = $6,
-            end_date = $7
-        WHERE id = $8
-        RETURNING id, maintenance_type AS "maintenanceType", description, cost, status, start_date AS "startDate", end_date AS "endDate"
+            date = $5
+        WHERE id = $6
+        RETURNING id
       `,
-      [parsedVehicleId, maintenanceType.trim(), description?.trim() || null, Number(cost), status || "Pending", startDate, endDate || null, Number(id)]
+      [parsedVehicleId, driver.trim(), Number(liters), Number(cost), date, Number(id)]
     );
 
     if (result.rows.length === 0) {
-      return Response.json({ success: false, message: "Maintenance record not found." }, { status: 404 });
+      return Response.json({ success: false, message: "Fuel log not found." }, { status: 404 });
     }
 
-    return Response.json({ success: true, maintenance: result.rows[0], message: "Maintenance updated successfully." });
+    return Response.json({ success: true, message: "Fuel log updated successfully." });
   } catch (error) {
-    console.error("Maintenance update error:", error);
-
+    console.error("Fuel update error:", error);
     return Response.json(
       {
         success: false,
-        message: "Failed to update maintenance record",
+        message: "Failed to update fuel record",
         error: error.message,
       },
       { status: 500 }
@@ -102,21 +91,19 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const { id } = await params;
-
-    const result = await pool.query("DELETE FROM maintenance_logs WHERE id = $1 RETURNING id", [Number(id)]);
+    const result = await pool.query("DELETE FROM fuel_logs WHERE id = $1 RETURNING id", [Number(id)]);
 
     if (result.rows.length === 0) {
-      return Response.json({ success: false, message: "Maintenance record not found." }, { status: 404 });
+      return Response.json({ success: false, message: "Fuel log not found." }, { status: 404 });
     }
 
-    return Response.json({ success: true, message: "Maintenance deleted successfully." });
+    return Response.json({ success: true, message: "Fuel log deleted successfully." });
   } catch (error) {
-    console.error("Maintenance delete error:", error);
-
+    console.error("Fuel delete error:", error);
     return Response.json(
       {
         success: false,
-        message: "Failed to delete maintenance record",
+        message: "Failed to delete fuel record",
         error: error.message,
       },
       { status: 500 }
