@@ -51,6 +51,7 @@ export const ROLE_PERMISSIONS = {
     "Financial Analyst": {
         pages: [
             "dashboard",
+            "vehicles",
             "fuel",
             "expenses",
             "analytics",
