@@ -13,11 +13,13 @@ export default function TripDetailPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState("");
   const [error, setError] = useState("");
+  const [errors, setErrors] = useState([]);
   const [notice, setNotice] = useState("");
 
   const loadTrip = useCallback(async () => {
     setLoading(true);
     setError("");
+    setErrors([]);
     try {
       const res = await fetch(`/api/trips/${id}`);
       const data = await res.json();
@@ -39,12 +41,21 @@ export default function TripDetailPage() {
     if (!trip) return;
     setActionLoading(action);
     setError("");
+    setErrors([]);
     setNotice("");
 
     try {
       const res = await fetch(`/api/trips/${id}/${action}`, { method: "POST" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || `Failed to ${action} trip.`);
+      if (!res.ok) {
+        if (Array.isArray(data.errors) && data.errors.length) {
+          setErrors(data.errors);
+          setError(data.error || data.errors.join(" "));
+        } else {
+          setError(data.error || `Failed to ${action} trip.`);
+        }
+        return;
+      }
 
       setTrip(data);
       setNotice(`Trip ${action} saved to the database.`);
@@ -59,6 +70,7 @@ export default function TripDetailPage() {
   const canDispatch = trip?.status === "Draft";
   const canComplete = trip?.status === "Dispatched" || trip?.status === "In Progress";
   const canCancel = trip && !["Completed", "Cancelled"].includes(trip.status);
+  const isTerminal = trip && ["Completed", "Cancelled"].includes(trip.status);
 
   return (
     <div className="min-h-screen bg-zinc-50">
@@ -124,15 +136,29 @@ export default function TripDetailPage() {
                 </dl>
               </section>
 
+              {isTerminal && (
+                <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-700">
+                  This trip is {trip.status.toLowerCase()} and cannot be edited.
+                </div>
+              )}
+
               {notice && (
                 <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
                   {notice}
                 </div>
               )}
 
-              {error && (
+              {(error || errors.length > 0) && (
                 <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                  {error}
+                  {errors.length > 0 ? (
+                    <ul className="list-disc space-y-1 pl-5">
+                      {errors.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    error
+                  )}
                 </div>
               )}
 

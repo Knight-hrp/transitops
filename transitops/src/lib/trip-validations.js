@@ -14,12 +14,33 @@ function isLicenseExpired(expiryDate) {
   return expiry < today;
 }
 
-export async function validateTripAssignment(prisma, { vehicleId, driverId, cargoWeight, tripId }) {
+export function formatValidationResponse(errors) {
+  return {
+    error: errors.join(" "),
+    errors,
+  };
+}
+
+export function assertTripEditable(trip) {
+  if (!trip) return "Trip not found.";
+  if (trip.status === TRIP_STATUS.COMPLETED) {
+    return "Completed trips cannot be edited.";
+  }
+  if (trip.status === TRIP_STATUS.CANCELLED) {
+    return "Cancelled trips cannot be edited.";
+  }
+  return null;
+}
+
+export async function validateTripAssignment(
+  prisma,
+  { vehicleId, driverId, cargoWeight, tripId },
+) {
   const errors = [];
 
   if (!vehicleId) errors.push("Vehicle is required.");
   if (!driverId) errors.push("Driver is required.");
-  if (!cargoWeight || Number(cargoWeight) <= 0) {
+  if (cargoWeight == null || Number(cargoWeight) <= 0) {
     errors.push("Cargo weight must be greater than 0.");
   }
 
@@ -38,14 +59,13 @@ export async function validateTripAssignment(prisma, { vehicleId, driverId, carg
 
   if (vehicle) {
     if (vehicle.status === VEHICLE_STATUS.IN_SHOP || activeMaintenance) {
-      errors.push("Vehicle is in maintenance and cannot be dispatched.");
-    }
-    if (vehicle.status === VEHICLE_STATUS.ON_TRIP) {
+      errors.push("Vehicle is in maintenance (In Shop) and cannot be dispatched.");
+    } else if (vehicle.status === VEHICLE_STATUS.ON_TRIP) {
       errors.push("Vehicle is already on a trip.");
-    }
-    if (vehicle.status !== VEHICLE_STATUS.AVAILABLE) {
+    } else if (vehicle.status !== VEHICLE_STATUS.AVAILABLE) {
       errors.push(`Vehicle is not available (current status: ${vehicle.status}).`);
     }
+
     if (Number(cargoWeight) > toNumber(vehicle.maxLoadCapacity)) {
       errors.push(
         `Cargo weight (${cargoWeight} kg) exceeds vehicle capacity (${toNumber(vehicle.maxLoadCapacity)} kg).`,
@@ -56,15 +76,14 @@ export async function validateTripAssignment(prisma, { vehicleId, driverId, carg
   if (driver) {
     if (driver.status === DRIVER_STATUS.SUSPENDED) {
       errors.push("Driver is suspended and cannot be assigned.");
+    } else if (driver.status === DRIVER_STATUS.ON_TRIP) {
+      errors.push("Driver is already on a trip.");
+    } else if (driver.status !== DRIVER_STATUS.AVAILABLE) {
+      errors.push(`Driver is not available (current status: ${driver.status}).`);
     }
+
     if (isLicenseExpired(driver.licenseExpiryDate)) {
       errors.push("Driver license has expired.");
-    }
-    if (driver.status === DRIVER_STATUS.ON_TRIP) {
-      errors.push("Driver is already on a trip.");
-    }
-    if (driver.status !== DRIVER_STATUS.AVAILABLE) {
-      errors.push(`Driver is not available (current status: ${driver.status}).`);
     }
   }
 
@@ -77,7 +96,9 @@ export async function validateTripAssignment(prisma, { vehicleId, driverId, carg
   });
 
   if (conflictingTrip) {
-    errors.push("Vehicle or driver is already assigned to another active trip.");
+    errors.push(
+      `Vehicle or driver is already assigned to active trip #${conflictingTrip.id}.`,
+    );
   }
 
   return { valid: errors.length === 0, errors, vehicle, driver };

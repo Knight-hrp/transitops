@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { serializeTrip } from "@/lib/constants";
-import { validateTripAssignment } from "@/lib/trip-validations";
+import {
+  formatValidationResponse,
+  validateTripAssignment,
+} from "@/lib/trip-validations";
 
 const tripInclude = {
   vehicle: true,
@@ -34,21 +37,28 @@ export async function POST(request) {
 
     if (!source?.trim() || !destination?.trim()) {
       return NextResponse.json(
-        { error: "Source and destination are required." },
+        formatValidationResponse(["Source and destination are required."]),
         { status: 400 },
       );
     }
 
-    if (vehicleId && driverId) {
-      const validation = await validateTripAssignment(prisma, {
-        vehicleId,
-        driverId,
-        cargoWeight,
-      });
+    if (!vehicleId || !driverId) {
+      return NextResponse.json(
+        formatValidationResponse(["Vehicle and driver are required."]),
+        { status: 400 },
+      );
+    }
 
-      if (!validation.valid) {
-        return NextResponse.json({ error: validation.errors.join(" ") }, { status: 400 });
-      }
+    const validation = await validateTripAssignment(prisma, {
+      vehicleId,
+      driverId,
+      cargoWeight,
+    });
+
+    if (!validation.valid) {
+      return NextResponse.json(formatValidationResponse(validation.errors), {
+        status: 400,
+      });
     }
 
     const trip = await prisma.trip.create({
@@ -58,8 +68,8 @@ export async function POST(request) {
         cargoWeight,
         plannedDistance: plannedDistance || null,
         revenue: revenue || 0,
-        vehicleId: vehicleId ? Number(vehicleId) : null,
-        driverId: driverId ? Number(driverId) : null,
+        vehicleId: Number(vehicleId),
+        driverId: Number(driverId),
         status: "Draft",
       },
       include: tripInclude,

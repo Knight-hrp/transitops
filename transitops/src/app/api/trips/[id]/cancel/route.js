@@ -6,7 +6,7 @@ import {
   VEHICLE_STATUS,
   serializeTrip,
 } from "@/lib/constants";
-import { assertTripTransition } from "@/lib/trip-validations";
+import { assertTripTransition, formatValidationResponse } from "@/lib/trip-validations";
 
 const tripInclude = { vehicle: true, driver: true };
 
@@ -26,7 +26,9 @@ export async function POST(_request, { params }) {
 
     const transitionError = assertTripTransition(trip, "cancel");
     if (transitionError) {
-      return NextResponse.json({ error: transitionError }, { status: 400 });
+      return NextResponse.json(formatValidationResponse([transitionError]), {
+        status: 400,
+      });
     }
 
     const wasActive = [TRIP_STATUS.DISPATCHED, TRIP_STATUS.IN_PROGRESS].includes(trip.status);

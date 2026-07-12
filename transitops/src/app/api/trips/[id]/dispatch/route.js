@@ -8,6 +8,7 @@ import {
 } from "@/lib/constants";
 import {
   assertTripTransition,
+  formatValidationResponse,
   validateTripAssignment,
 } from "@/lib/trip-validations";
 
@@ -29,7 +30,9 @@ export async function POST(_request, { params }) {
 
     const transitionError = assertTripTransition(trip, "dispatch");
     if (transitionError) {
-      return NextResponse.json({ error: transitionError }, { status: 400 });
+      return NextResponse.json(formatValidationResponse([transitionError]), {
+        status: 400,
+      });
     }
 
     const validation = await validateTripAssignment(prisma, {
@@ -40,7 +43,9 @@ export async function POST(_request, { params }) {
     });
 
     if (!validation.valid) {
-      return NextResponse.json({ error: validation.errors.join(" ") }, { status: 400 });
+      return NextResponse.json(formatValidationResponse(validation.errors), {
+        status: 400,
+      });
     }
 
     const updated = await prisma.$transaction(async (tx) => {
