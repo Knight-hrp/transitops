@@ -167,7 +167,7 @@ function NewTripForm() {
                   required
                   value={form.source}
                   onChange={(e) => updateField("source", e.target.value)}
-                  className="w-full rounded-lg border border-zinc-300 px-3 py-2"
+                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 placeholder:text-zinc-400 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
                   placeholder="Mumbai Warehouse"
                 />
               </label>
@@ -177,7 +177,7 @@ function NewTripForm() {
                   required
                   value={form.destination}
                   onChange={(e) => updateField("destination", e.target.value)}
-                  className="w-full rounded-lg border border-zinc-300 px-3 py-2"
+                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 placeholder:text-zinc-400 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
                   placeholder="Pune Distribution Center"
                 />
               </label>
@@ -189,7 +189,7 @@ function NewTripForm() {
                   min="1"
                   value={form.cargoWeight}
                   onChange={(e) => updateField("cargoWeight", e.target.value)}
-                  className="w-full rounded-lg border border-zinc-300 px-3 py-2"
+                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 placeholder:text-zinc-400 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
                   placeholder="450"
                 />
               </label>
@@ -202,7 +202,7 @@ function NewTripForm() {
                   min="0"
                   value={form.plannedDistance}
                   onChange={(e) => updateField("plannedDistance", e.target.value)}
-                  className="w-full rounded-lg border border-zinc-300 px-3 py-2"
+                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 placeholder:text-zinc-400 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
                   placeholder="150"
                 />
               </label>
@@ -295,7 +295,7 @@ function NewTripForm() {
                     required
                     value={form.vehicleId}
                     onChange={(e) => updateField("vehicleId", e.target.value)}
-                    className="w-full rounded-lg border border-zinc-300 px-3 py-2"
+                    className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
                   >
                     <option value="">Select vehicle</option>
                     {vehicles.map((vehicle) => (
@@ -311,7 +311,7 @@ function NewTripForm() {
                     required
                     value={form.driverId}
                     onChange={(e) => updateField("driverId", e.target.value)}
-                    className="w-full rounded-lg border border-zinc-300 px-3 py-2"
+                    className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
                   >
                     <option value="">Select driver</option>
                     {drivers.map((driver) => (

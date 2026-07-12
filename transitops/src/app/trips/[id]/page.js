@@ -52,6 +52,12 @@ function TripDetail() {
     };
   }, [id]);
 
+  useEffect(() => {
+    if (!notice) return undefined;
+    const timer = setTimeout(() => setNotice(""), 4000);
+    return () => clearTimeout(timer);
+  }, [notice]);
+
   async function runAction(action) {
     if (!trip) return;
     setActionLoading(action);
