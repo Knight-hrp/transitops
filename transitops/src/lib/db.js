@@ -9,4 +9,9 @@ const pool = new Pool({
     },
 });
 
+// Prevent idle client errors from crashing the Next.js process
+pool.on("error", (err) => {
+    console.error("Unexpected pg pool connection error:", err);
+});
+
 export default pool;
