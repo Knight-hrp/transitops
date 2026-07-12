@@ -96,6 +96,56 @@ async function main() {
       create: driver,
     });
   }
+
+  const maintenanceLogs = [
+    {
+      vehicleName: "Van-05",
+      maintenanceType: "Oil Change",
+      description: "Routine engine oil and filter replacement",
+      cost: 2500,
+      status: "Completed",
+      startDate: new Date("2026-07-12"),
+      endDate: new Date("2026-07-12"),
+    },
+    {
+      vehicleName: "Truck-02",
+      maintenanceType: "Tyre Replacement",
+      description: "Replaced all four tyres before route deployment",
+      cost: 6000,
+      status: "Pending",
+      startDate: new Date("2026-07-15"),
+      endDate: null,
+    },
+    {
+      vehicleName: "Pickup-11",
+      maintenanceType: "Brake Repair",
+      description: "Serviced brake pads and checked fluid levels",
+      cost: 8200,
+      status: "Urgent",
+      startDate: new Date("2026-07-18"),
+      endDate: null,
+    },
+  ];
+
+  for (const log of maintenanceLogs) {
+    const vehicle = await prisma.vehicle.findFirst({
+      where: { vehicleName: log.vehicleName },
+    });
+
+    if (vehicle) {
+      await prisma.maintenanceLog.create({
+        data: {
+          vehicleId: vehicle.id,
+          maintenanceType: log.maintenanceType,
+          description: log.description,
+          cost: log.cost,
+          status: log.status,
+          startDate: log.startDate,
+          endDate: log.endDate,
+        },
+      });
+    }
+  }
 }
 
 main()
