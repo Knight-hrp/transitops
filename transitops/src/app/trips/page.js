@@ -1,10 +1,21 @@
 import Link from "next/link";
 import AppNav from "@/components/AppNav";
 import StatusBadge from "@/components/StatusBadge";
-import { MOCK_TRIPS } from "@/lib/mock-data";
+import { serializeTrip } from "@/lib/constants";
+import { prisma } from "@/lib/prisma";
 
-export default function TripsPage() {
-  const trips = MOCK_TRIPS;
+export const dynamic = "force-dynamic";
+
+async function getTrips() {
+  const trips = await prisma.trip.findMany({
+    include: { vehicle: true, driver: true },
+    orderBy: { createdAt: "desc" },
+  });
+  return trips.map(serializeTrip);
+}
+
+export default async function TripsPage() {
+  const trips = await getTrips();
 
   return (
     <div className="min-h-screen bg-zinc-50">

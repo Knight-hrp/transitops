@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import AppNav from "@/components/AppNav";
 import StatusBadge from "@/components/StatusBadge";
-import { applyMockTripAction, getMockTripById } from "@/lib/mock-data";
+import { applyMockTripAction } from "@/lib/mock-data";
 
 export default function TripDetailPage() {
   const { id } = useParams();
@@ -15,18 +15,25 @@ export default function TripDetailPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  useEffect(() => {
+  const loadTrip = useCallback(async () => {
     setLoading(true);
     setError("");
-    const mockTrip = getMockTripById(id);
-    if (!mockTrip) {
+    try {
+      const res = await fetch(`/api/trips/${id}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to load trip.");
+      setTrip(data);
+    } catch (err) {
+      setError(err.message);
       setTrip(null);
-      setError("Trip not found.");
-    } else {
-      setTrip(mockTrip);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [id]);
+
+  useEffect(() => {
+    loadTrip();
+  }, [loadTrip]);
 
   function runAction(action) {
     if (!trip) return;
@@ -39,7 +46,9 @@ export default function TripDetailPage() {
       setError(result.error);
     } else {
       setTrip(result.trip);
-      setNotice(`Trip ${action} applied (mock UI — database sync comes in hour 2+).`);
+      setNotice(
+        `Trip ${action} preview applied in UI only. Database status sync arrives in the next phase.`,
+      );
     }
     setActionLoading("");
   }
