@@ -1,0 +1,165 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import AppNav from "@/components/AppNav";
+import StatusBadge from "@/components/StatusBadge";
+import { applyMockTripAction, getMockTripById } from "@/lib/mock-data";
+
+export default function TripDetailPage() {
+  const { id } = useParams();
+  const [trip, setTrip] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState("");
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+
+  useEffect(() => {
+    setLoading(true);
+    setError("");
+    const mockTrip = getMockTripById(id);
+    if (!mockTrip) {
+      setTrip(null);
+      setError("Trip not found.");
+    } else {
+      setTrip(mockTrip);
+    }
+    setLoading(false);
+  }, [id]);
+
+  function runAction(action) {
+    if (!trip) return;
+    setActionLoading(action);
+    setError("");
+    setNotice("");
+
+    const result = applyMockTripAction(trip, action);
+    if (result.error) {
+      setError(result.error);
+    } else {
+      setTrip(result.trip);
+      setNotice(`Trip ${action} applied (mock UI — database sync comes in hour 2+).`);
+    }
+    setActionLoading("");
+  }
+
+  const canDispatch = trip?.status === "Draft";
+  const canComplete = trip?.status === "Dispatched" || trip?.status === "In Progress";
+  const canCancel = trip && !["Completed", "Cancelled"].includes(trip.status);
+
+  return (
+    <div className="min-h-screen bg-zinc-50">
+      <AppNav />
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <Link href="/trips" className="text-sm text-zinc-600 hover:text-zinc-900">
+          ← Back to trips
+        </Link>
+
+        {loading ? (
+          <p className="mt-6 text-zinc-600">Loading trip…</p>
+        ) : error && !trip ? (
+          <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        ) : (
+          trip && (
+            <>
+              <div className="mt-4 flex items-start justify-between gap-4">
+                <div>
+                  <h1 className="text-2xl font-semibold text-zinc-900">
+                    {trip.source} → {trip.destination}
+                  </h1>
+                  <p className="mt-1 text-sm text-zinc-600">Trip #{trip.id}</p>
+                </div>
+                <StatusBadge status={trip.status} />
+              </div>
+
+              <section className="mt-6 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+                <dl className="grid gap-4 sm:grid-cols-2 text-sm">
+                  <div>
+                    <dt className="text-zinc-500">Vehicle</dt>
+                    <dd className="mt-1 font-medium text-zinc-900">
+                      {trip.vehicle?.vehicleName ?? "—"}
+                      {trip.vehicle?.status && (
+                        <span className="ml-2">
+                          <StatusBadge status={trip.vehicle.status} />
+                        </span>
+                      )}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-zinc-500">Driver</dt>
+                    <dd className="mt-1 font-medium text-zinc-900">
+                      {trip.driver?.name ?? "—"}
+                      {trip.driver?.status && (
+                        <span className="ml-2">
+                          <StatusBadge status={trip.driver.status} />
+                        </span>
+                      )}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-zinc-500">Cargo Weight</dt>
+                    <dd className="mt-1 font-medium text-zinc-900">{trip.cargoWeight} kg</dd>
+                  </div>
+                  <div>
+                    <dt className="text-zinc-500">Planned Distance</dt>
+                    <dd className="mt-1 font-medium text-zinc-900">
+                      {trip.plannedDistance ? `${trip.plannedDistance} km` : "—"}
+                    </dd>
+                  </div>
+                </dl>
+              </section>
+
+              {notice && (
+                <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                  {notice}
+                </div>
+              )}
+
+              {error && (
+                <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {error}
+                </div>
+              )}
+
+              <div className="mt-6 flex flex-wrap gap-3">
+                {canDispatch && (
+                  <button
+                    type="button"
+                    onClick={() => runAction("dispatch")}
+                    disabled={!!actionLoading}
+                    className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+                  >
+                    {actionLoading === "dispatch" ? "Dispatching…" : "Dispatch"}
+                  </button>
+                )}
+                {canComplete && (
+                  <button
+                    type="button"
+                    onClick={() => runAction("complete")}
+                    disabled={!!actionLoading}
+                    className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+                  >
+                    {actionLoading === "complete" ? "Completing…" : "Complete Trip"}
+                  </button>
+                )}
+                {canCancel && (
+                  <button
+                    type="button"
+                    onClick={() => runAction("cancel")}
+                    disabled={!!actionLoading}
+                    className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-60"
+                  >
+                    {actionLoading === "cancel" ? "Cancelling…" : "Cancel Trip"}
+                  </button>
+                )}
+              </div>
+            </>
+          )
+        )}
+      </main>
+    </div>
+  );
+}
