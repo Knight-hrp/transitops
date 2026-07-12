@@ -146,6 +146,64 @@ async function main() {
       });
     }
   }
+
+  const existingTrips = await prisma.trip.count();
+  if (existingTrips === 0) {
+    const findVehicle = (vehicleName) =>
+      prisma.vehicle.findFirst({ where: { vehicleName } });
+    const findDriver = (licenseNumber) =>
+      prisma.driver.findFirst({ where: { licenseNumber } });
+
+    const [van05, truck02, pickup11] = await Promise.all([
+      findVehicle("Van-05"),
+      findVehicle("Truck-02"),
+      findVehicle("Pickup-11"),
+    ]);
+    const [rahul, priya] = await Promise.all([
+      findDriver("DL-2020-10001"),
+      findDriver("DL-2019-20002"),
+    ]);
+
+    const demoTrips = [
+      {
+        source: "Mumbai Warehouse",
+        destination: "Pune Distribution Center",
+        cargoWeight: 420,
+        plannedDistance: 150,
+        vehicleId: van05?.id,
+        driverId: rahul?.id,
+        status: "Draft",
+        revenue: 18000,
+      },
+      {
+        source: "Nashik Depot",
+        destination: "Nagpur Hub",
+        cargoWeight: 1500,
+        plannedDistance: 610,
+        finalOdometer: 128610,
+        fuelConsumed: 95,
+        vehicleId: truck02?.id,
+        driverId: priya?.id,
+        status: "Completed",
+        revenue: 62000,
+      },
+      {
+        source: "Surat Yard",
+        destination: "Rajkot Terminal",
+        cargoWeight: 700,
+        plannedDistance: 250,
+        vehicleId: pickup11?.id,
+        driverId: rahul?.id,
+        status: "Cancelled",
+        revenue: 0,
+      },
+    ];
+
+    for (const trip of demoTrips) {
+      if (!trip.vehicleId || !trip.driverId) continue;
+      await prisma.trip.create({ data: trip });
+    }
+  }
 }
 
 main()

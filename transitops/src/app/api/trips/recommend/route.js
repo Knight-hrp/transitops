@@ -27,7 +27,7 @@ export async function GET(request) {
     });
 
     const maintenanceLogs = await prisma.maintenanceLog.findMany({
-      where: { status: "Active" },
+      where: { NOT: { status: "Completed" } },
       select: { vehicleId: true },
     });
 
