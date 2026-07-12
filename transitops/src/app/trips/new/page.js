@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AppNav from "@/components/AppNav";
@@ -12,6 +12,7 @@ export default function NewTripPage() {
   const [loadingOptions, setLoadingOptions] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [errors, setErrors] = useState([]);
   const [form, setForm] = useState({
     source: "",
     destination: "",
@@ -34,6 +35,18 @@ export default function NewTripPage() {
       .finally(() => setLoadingOptions(false));
   }, []);
 
+  const selectedVehicle = useMemo(
+    () => vehicles.find((vehicle) => String(vehicle.id) === String(form.vehicleId)),
+    [vehicles, form.vehicleId],
+  );
+
+  const capacityWarning =
+    selectedVehicle &&
+    form.cargoWeight &&
+    Number(form.cargoWeight) > Number(selectedVehicle.maxLoadCapacity)
+      ? `Cargo (${form.cargoWeight} kg) exceeds ${selectedVehicle.vehicleName} capacity (${selectedVehicle.maxLoadCapacity} kg).`
+      : "";
+
   function updateField(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
@@ -42,6 +55,7 @@ export default function NewTripPage() {
     event.preventDefault();
     setSubmitting(true);
     setError("");
+    setErrors([]);
 
     try {
       const res = await fetch("/api/trips", {
@@ -59,7 +73,15 @@ export default function NewTripPage() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to create trip.");
+      if (!res.ok) {
+        if (Array.isArray(data.errors) && data.errors.length) {
+          setErrors(data.errors);
+          setError(data.error || data.errors.join(" "));
+        } else {
+          setError(data.error || "Failed to create trip.");
+        }
+        return;
+      }
 
       router.push(`/trips/${data.id}`);
     } catch (err) {
@@ -176,17 +198,28 @@ export default function NewTripPage() {
                 </label>
               </div>
             )}
+            {capacityWarning && (
+              <p className="mt-3 text-sm text-amber-700">{capacityWarning}</p>
+            )}
           </section>
 
-          {error && (
+          {(error || errors.length > 0) && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
+              {errors.length > 0 ? (
+                <ul className="list-disc space-y-1 pl-5">
+                  {errors.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              ) : (
+                error
+              )}
             </div>
           )}
 
           <button
             type="submit"
-            disabled={submitting || loadingOptions}
+            disabled={submitting || loadingOptions || !!capacityWarning}
             className="rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60"
           >
             {submitting ? "Creating…" : "Create Trip"}
