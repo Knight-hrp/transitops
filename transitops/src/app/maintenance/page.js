@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 
 const emptyForm = {
   vehicleId: "",
@@ -51,6 +51,7 @@ export default function Maintenance() {
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState({ type: "", text: "" });
+  const vehicleRef = useRef(null);
 
   useEffect(() => {
     fetchData();
@@ -200,6 +201,10 @@ export default function Maintenance() {
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       setMessage({ type: "error", text: "Please fix the highlighted fields." });
+      if (nextErrors.vehicleId && vehicleRef.current) {
+        vehicleRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        vehicleRef.current.focus && vehicleRef.current.focus();
+      }
       return;
     }
 
@@ -235,6 +240,13 @@ export default function Maintenance() {
       } else {
         setMessage({ type: "error", text: data.message || "Unable to save maintenance." });
         setErrors(data.errors || {});
+
+        const shouldScroll = (data.errors && data.errors.vehicleId) || (data.message && data.message.toLowerCase().includes("active maintenance"));
+        if (shouldScroll && vehicleRef.current) {
+          // ensure modal is open and then scroll to vehicle field
+          vehicleRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+          vehicleRef.current.focus && vehicleRef.current.focus();
+        }
       }
     } catch {
       setMessage({ type: "error", text: "Unable to save maintenance." });
@@ -283,17 +295,7 @@ export default function Maintenance() {
           </button>
         </div>
 
-        {message.text && !isFormOpen ? (
-          <div
-            className={`mb-6 rounded-2xl border px-4 py-3 text-sm ${
-              message.type === "success"
-                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                : "border-rose-200 bg-rose-50 text-rose-700"
-            }`}
-          >
-            {message.text}
-          </div>
-        ) : null}
+        {/* Top-page message intentionally removed; messages show inside modal when open */}
 
         <div className="mb-8 grid gap-6 md:grid-cols-3">
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-md">
@@ -434,6 +436,7 @@ export default function Maintenance() {
                   name="vehicleId"
                   value={form.vehicleId}
                   onChange={handleChange}
+                  ref={vehicleRef}
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-800 outline-none focus:border-blue-500"
                 >
                   <option value="">Select vehicle</option>
