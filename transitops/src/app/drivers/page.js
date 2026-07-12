@@ -430,7 +430,7 @@ export default function DriversPage() {
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Search driver name or license number..."
-                            className="w-full border border-zinc-300 rounded-lg px-4 py-2 text-sm text-zinc-900 outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full border border-zinc-300 rounded-lg px-4 py-2 text-sm text-zinc-900 bg-white outline-none focus:ring-2 focus:ring-blue-500"
                         />
                     </div>
                     <div className="flex gap-2 w-full md:w-auto">

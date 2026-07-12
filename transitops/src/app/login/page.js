@@ -85,7 +85,7 @@ export default function LoginPage() {
                                 onChange={handleChange}
                                 placeholder="admin@transitops.com"
                                 required
-                                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 bg-white outline-none focus:ring-2 focus:ring-blue-500"
                             />
                         </div>
 
@@ -104,7 +104,7 @@ export default function LoginPage() {
                                 onChange={handleChange}
                                 placeholder="Enter your password"
                                 required
-                                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 bg-white outline-none focus:ring-2 focus:ring-blue-500"
                             />
                         </div>
 

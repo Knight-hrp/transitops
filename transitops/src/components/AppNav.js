@@ -57,12 +57,12 @@ export default function AppNav() {
 
   return (
     <header className="border-b border-zinc-200 bg-white">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4">
         <Link href="/" className="text-lg font-semibold text-zinc-900">
           TransitOps
         </Link>
 
-        <nav className="flex items-center gap-5 text-sm font-medium">
+        <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-medium">
           <Link
             href="/"
             className={
@@ -99,16 +99,16 @@ export default function AppNav() {
             <span className="text-xs text-zinc-400">…</span>
           ) : user ? (
             <div className="flex items-center gap-3">
-              <span className="hidden text-xs text-zinc-500 sm:inline">
+              <span className="hidden text-xs text-zinc-600 sm:inline">
                 {user.name}
-                <span className="ml-1 rounded-full bg-zinc-100 px-2 py-0.5 font-medium text-zinc-600">
+                <span className="ml-1 rounded-full bg-zinc-100 px-2 py-0.5 font-medium text-zinc-700">
                   {user.role}
                 </span>
               </span>
               <button
                 type="button"
                 onClick={handleLogout}
-                className="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-100"
+                className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-800 transition hover:bg-zinc-100"
               >
                 Logout
               </button>
