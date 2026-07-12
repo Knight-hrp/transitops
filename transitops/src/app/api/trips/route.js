@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { serializeTrip } from "@/lib/constants";
+import { requireRole } from "@/lib/api-auth";
 import {
   formatValidationResponse,
   validateTripAssignment,
@@ -11,8 +12,13 @@ const tripInclude = {
   driver: true,
 };
 
+const TRIP_ROLES = ["Dispatcher"];
+
 export async function GET(request) {
   try {
+    const { error } = await requireRole(TRIP_ROLES);
+    if (error) return error;
+
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
 
@@ -31,6 +37,9 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
+    const { error } = await requireRole(TRIP_ROLES);
+    if (error) return error;
+
     const body = await request.json();
     const { source, destination, cargoWeight, vehicleId, driverId, plannedDistance, revenue } =
       body;

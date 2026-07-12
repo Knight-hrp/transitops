@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { serializeTrip } from "@/lib/constants";
+import { requireRole } from "@/lib/api-auth";
 import {
   assertTripEditable,
   formatValidationResponse,
@@ -12,8 +13,13 @@ const tripInclude = {
   driver: true,
 };
 
+const TRIP_ROLES = ["Dispatcher"];
+
 export async function GET(_request, { params }) {
   try {
+    const { error } = await requireRole(TRIP_ROLES);
+    if (error) return error;
+
     const { id } = await params;
     const trip = await prisma.trip.findUnique({
       where: { id: Number(id) },
@@ -33,6 +39,9 @@ export async function GET(_request, { params }) {
 
 export async function PATCH(request, { params }) {
   try {
+    const { error } = await requireRole(TRIP_ROLES);
+    if (error) return error;
+
     const { id } = await params;
     const tripId = Number(id);
 

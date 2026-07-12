@@ -4,8 +4,19 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AppNav from "@/components/AppNav";
+import RoleGuard from "@/components/RoleGuard";
+
+const TRIP_ROLES = ["Dispatcher"];
 
 export default function NewTripPage() {
+  return (
+    <RoleGuard allow={TRIP_ROLES}>
+      <NewTripForm />
+    </RoleGuard>
+  );
+}
+
+function NewTripForm() {
   const router = useRouter();
   const [vehicles, setVehicles] = useState([]);
   const [drivers, setDrivers] = useState([]);
@@ -13,6 +24,9 @@ export default function NewTripPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [errors, setErrors] = useState([]);
+  const [recommendation, setRecommendation] = useState(null);
+  const [alternatives, setAlternatives] = useState([]);
+  const [recLoading, setRecLoading] = useState(false);
   const [form, setForm] = useState({
     source: "",
     destination: "",
@@ -34,6 +48,41 @@ export default function NewTripPage() {
       .catch(() => setError("Failed to load available vehicles and drivers."))
       .finally(() => setLoadingOptions(false));
   }, []);
+
+  useEffect(() => {
+    const weight = Number(form.cargoWeight);
+    if (!weight || weight <= 0) {
+      setRecommendation(null);
+      setAlternatives([]);
+      return;
+    }
+
+    let cancelled = false;
+    setRecLoading(true);
+    const timer = setTimeout(() => {
+      fetch(`/api/trips/recommend?cargoWeight=${weight}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (cancelled) return;
+          setRecommendation(data.recommendation ?? null);
+          setAlternatives(Array.isArray(data.alternatives) ? data.alternatives : []);
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setRecommendation(null);
+            setAlternatives([]);
+          }
+        })
+        .finally(() => {
+          if (!cancelled) setRecLoading(false);
+        });
+    }, 400);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [form.cargoWeight]);
 
   const selectedVehicle = useMemo(
     () => vehicles.find((vehicle) => String(vehicle.id) === String(form.vehicleId)),
@@ -155,6 +204,78 @@ export default function NewTripPage() {
               </label>
             </div>
           </section>
+
+          {Number(form.cargoWeight) > 0 && (
+            <section className="rounded-xl border border-indigo-200 bg-indigo-50 p-6 shadow-sm">
+              <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-indigo-600">
+                <span aria-hidden>✨</span> Smart Dispatch Recommendation
+              </h2>
+              {recLoading ? (
+                <p className="text-sm text-indigo-700">Scoring available vehicles…</p>
+              ) : recommendation ? (
+                <div>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-lg font-semibold text-zinc-900">
+                        {recommendation.vehicle.vehicleName}
+                        <span className="ml-2 text-sm font-normal text-zinc-500">
+                          {recommendation.vehicle.registrationNumber}
+                        </span>
+                      </p>
+                      <p className="text-xs text-zinc-500">
+                        Capacity {recommendation.vehicle.maxLoadCapacity} kg · Match score{" "}
+                        {recommendation.score}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateField("vehicleId", String(recommendation.vehicle.id))
+                      }
+                      className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+                    >
+                      {String(form.vehicleId) === String(recommendation.vehicle.id)
+                        ? "✓ Selected"
+                        : "Use Recommended"}
+                    </button>
+                  </div>
+                  <ul className="mt-3 space-y-1">
+                    {recommendation.reasons.map((reason) => (
+                      <li key={reason} className="flex items-center gap-2 text-sm text-zinc-700">
+                        <span className="text-emerald-600" aria-hidden>
+                          ✓
+                        </span>
+                        {reason}
+                      </li>
+                    ))}
+                  </ul>
+                  {alternatives.length > 0 && (
+                    <div className="mt-4 border-t border-indigo-200 pt-3">
+                      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-indigo-500">
+                        Alternatives
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {alternatives.map((alt) => (
+                          <button
+                            key={alt.vehicle.id}
+                            type="button"
+                            onClick={() => updateField("vehicleId", String(alt.vehicle.id))}
+                            className="rounded-full border border-indigo-300 bg-white px-3 py-1 text-xs text-zinc-700 hover:border-indigo-500"
+                          >
+                            {alt.vehicle.vehicleName} · {alt.score}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-indigo-700">
+                  No available vehicle can carry {form.cargoWeight} kg right now.
+                </p>
+              )}
+            </section>
+          )}
 
           <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500">

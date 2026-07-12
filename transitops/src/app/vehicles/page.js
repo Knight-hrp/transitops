@@ -38,9 +38,32 @@ export default function VehiclesPage() {
     const [message, setMessage] = useState({ type: "", text: "" });
     const [formErrors, setFormErrors] = useState({});
 
+    // Auth & Role-Based Access Control State
+    const [userRole, setUserRole] = useState(null);
+    const [authLoading, setAuthLoading] = useState(true);
+
     useEffect(() => {
+        fetchUserRole();
         fetchVehicles();
     }, []);
+
+    async function fetchUserRole() {
+        setAuthLoading(true);
+        try {
+            const response = await fetch("/api/auth/me");
+            const data = await response.json();
+            if (data.success && data.user) {
+                setUserRole(data.user.role);
+            } else {
+                setUserRole(null);
+            }
+        } catch (error) {
+            console.error("Error fetching user profile:", error);
+            setUserRole(null);
+        } finally {
+            setAuthLoading(false);
+        }
+    }
 
     // Dismiss message alerts after 3 seconds
     useEffect(() => {
@@ -91,6 +114,10 @@ export default function VehiclesPage() {
         };
     }, [vehicles]);
 
+    // Permission flags
+    const canWrite = userRole === "Fleet Manager";
+    const canViewCost = userRole === "Fleet Manager" || userRole === "Financial Analyst";
+
     function handleEdit(vehicle) {
         setEditingId(vehicle.id);
         setForm({
@@ -108,6 +135,7 @@ export default function VehiclesPage() {
     }
 
     async function handleDelete(id) {
+        if (!canWrite) return;
         if (!confirm("Are you sure you want to delete this vehicle from the fleet?")) {
             return;
         }
@@ -180,6 +208,7 @@ export default function VehiclesPage() {
 
     async function handleSubmit(event) {
         event.preventDefault();
+        if (!canWrite) return;
         setMessage({ type: "", text: "" });
 
         if (!validateForm()) {
@@ -232,6 +261,40 @@ export default function VehiclesPage() {
         }
     }
 
+    if (authLoading) {
+        return (
+            <div className="min-h-screen bg-zinc-50 flex flex-col">
+                <AppNav />
+                <main className="flex-1 flex items-center justify-center">
+                    <div className="text-zinc-500 font-medium">Checking authorization...</div>
+                </main>
+            </div>
+        );
+    }
+
+    if (userRole === "Safety Officer") {
+        return (
+            <div className="min-h-screen bg-zinc-50 flex flex-col">
+                <AppNav />
+                <main className="flex-1 flex items-center justify-center px-4">
+                    <div className="max-w-md w-full bg-white shadow-lg rounded-2xl p-8 text-center border border-zinc-200 animate-slide-in">
+                        <div className="text-red-500 text-5xl mb-4">⚠️</div>
+                        <h2 className="text-2xl font-bold text-zinc-900 mb-2">Access Denied</h2>
+                        <p className="text-zinc-500 text-sm mb-6">
+                            Your account system role (<strong>Safety Officer</strong>) does not have access permissions for vehicle fleet management.
+                        </p>
+                        <Link
+                            href="/dashboard"
+                            className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 rounded-lg text-sm shadow-sm transition"
+                        >
+                            Return to Dashboard
+                        </Link>
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-zinc-50 flex flex-col">
             <AppNav />
@@ -245,17 +308,19 @@ export default function VehiclesPage() {
                             Monitor and manage your active transport fleet.
                         </p>
                     </div>
-                    <button
-                        onClick={() => {
-                            setEditingId(null);
-                            setForm(emptyForm);
-                            setFormErrors({});
-                            setIsFormOpen(true);
-                        }}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2.5 rounded-lg shadow-sm transition"
-                    >
-                        + Add Vehicle
-                    </button>
+                    {canWrite && (
+                        <button
+                            onClick={() => {
+                                setEditingId(null);
+                                setForm(emptyForm);
+                                setFormErrors({});
+                                setIsFormOpen(true);
+                            }}
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2.5 rounded-lg shadow-sm transition"
+                        >
+                            + Add Vehicle
+                        </button>
+                    )}
                 </div>
 
                 {/* Notifications */}
@@ -336,9 +401,13 @@ export default function VehiclesPage() {
                                         <th className="p-4 font-semibold text-zinc-600">Type</th>
                                         <th className="p-4 font-semibold text-zinc-600 text-right">Max Load</th>
                                         <th className="p-4 font-semibold text-zinc-600 text-right">Odometer</th>
-                                        <th className="p-4 font-semibold text-zinc-600 text-right">Acq. Cost</th>
+                                        {canViewCost && (
+                                            <th className="p-4 font-semibold text-zinc-600 text-right">Acq. Cost</th>
+                                        )}
                                         <th className="p-4 font-semibold text-zinc-600">Status</th>
-                                        <th className="p-4 font-semibold text-zinc-600 text-right">Actions</th>
+                                        {canWrite && (
+                                            <th className="p-4 font-semibold text-zinc-600 text-right">Actions</th>
+                                        )}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-zinc-200">
@@ -349,7 +418,9 @@ export default function VehiclesPage() {
                                             <td className="p-4 text-zinc-600">{v.type}</td>
                                             <td className="p-4 text-right text-zinc-600">{Number(v.maxLoadCapacity).toLocaleString()} kg</td>
                                             <td className="p-4 text-right text-zinc-600">{Number(v.odometer).toLocaleString()} km</td>
-                                            <td className="p-4 text-right text-zinc-900 font-medium">{formatCurrency(v.acquisitionCost)}</td>
+                                            {canViewCost && (
+                                                <td className="p-4 text-right text-zinc-900 font-medium">{formatCurrency(v.acquisitionCost)}</td>
+                                            )}
                                             <td className="p-4">
                                                 <span
                                                     className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${
@@ -363,22 +434,24 @@ export default function VehiclesPage() {
                                                     {v.status}
                                                 </span>
                                             </td>
-                                            <td className="p-4 text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    <button
-                                                        onClick={() => handleEdit(v)}
-                                                        className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded transition"
-                                                    >
-                                                        Edit
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(v.id)}
-                                                        className="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-2.5 py-1 rounded transition"
-                                                    >
-                                                        Remove
-                                                    </button>
-                                                </div>
-                                            </td>
+                                            {canWrite && (
+                                                <td className="p-4 text-right">
+                                                    <div className="flex justify-end gap-2">
+                                                        <button
+                                                            onClick={() => handleEdit(v)}
+                                                            className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded transition"
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDelete(v.id)}
+                                                            className="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-2.5 py-1 rounded transition"
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            )}
                                         </tr>
                                     ))}
                                 </tbody>
