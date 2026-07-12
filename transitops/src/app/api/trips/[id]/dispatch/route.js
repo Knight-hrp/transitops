@@ -64,7 +64,10 @@ export async function POST(_request, { params }) {
       });
       return tx.trip.update({
         where: { id: tripId },
-        data: { status: TRIP_STATUS.DISPATCHED },
+        data: {
+          status: TRIP_STATUS.DISPATCHED,
+          startDate: trip.startDate ?? new Date(),
+        },
         include: tripInclude,
       });
     });

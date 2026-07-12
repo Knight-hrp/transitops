@@ -1,5 +1,5 @@
-import Link from "next/link";
 import AppNav from "@/components/AppNav";
+import HomeCTAs from "@/components/HomeCTAs";
 
 export default function Home() {
   return (
@@ -15,20 +15,7 @@ export default function Home() {
             Fleet, driver, trip, maintenance, and expense management — starting with
             trip dispatch, validations, and smart vehicle recommendations.
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              href="/trips"
-              className="rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-800"
-            >
-              View Trips
-            </Link>
-            <Link
-              href="/trips/new"
-              className="rounded-lg border border-zinc-300 px-5 py-2.5 text-sm font-medium text-zinc-900 hover:bg-zinc-100"
-            >
-              Create Trip
-            </Link>
-          </div>
+          <HomeCTAs />
         </div>
       </main>
     </div>

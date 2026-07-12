@@ -154,6 +154,24 @@ function TripDetail() {
                       {trip.plannedDistance ? `${trip.plannedDistance} km` : "—"}
                     </dd>
                   </div>
+                  <div>
+                    <dt className="text-zinc-500">Scheduled Date</dt>
+                    <dd className="mt-1 font-medium text-zinc-900">
+                      {trip.scheduledDate ?? "—"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-zinc-500">Start Date</dt>
+                    <dd className="mt-1 font-medium text-zinc-900">
+                      {trip.startDate ?? "—"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-zinc-500">End Date</dt>
+                    <dd className="mt-1 font-medium text-zinc-900">
+                      {trip.endDate ?? "—"}
+                    </dd>
+                  </div>
                 </dl>
               </section>
 

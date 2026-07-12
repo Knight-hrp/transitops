@@ -69,6 +69,9 @@ model Trip {
   driverId        Int?       @map("driver_id")
   cargoWeight     Decimal    @map("cargo_weight") @db.Decimal(10, 2)
   plannedDistance Decimal?   @map("planned_distance") @db.Decimal(10, 2)
+  scheduledDate   DateTime?  @map("scheduled_date") @db.Date
+  startDate       DateTime?  @map("start_date") @db.Date
+  endDate         DateTime?  @map("end_date") @db.Date
   finalOdometer   Decimal?   @map("final_odometer") @db.Decimal(12, 2)
   fuelConsumed    Decimal?   @map("fuel_consumed") @db.Decimal(10, 2)
   revenue         Decimal    @default(0) @db.Decimal(15, 2)

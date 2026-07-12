@@ -74,6 +74,24 @@ export async function PATCH(request, { params }) {
       body.plannedDistance != null
         ? Number(body.plannedDistance)
         : existing.plannedDistance;
+    const nextScheduledDate =
+      body.scheduledDate !== undefined
+        ? body.scheduledDate
+          ? new Date(body.scheduledDate)
+          : null
+        : existing.scheduledDate;
+    const nextStartDate =
+      body.startDate !== undefined
+        ? body.startDate
+          ? new Date(body.startDate)
+          : null
+        : existing.startDate;
+    const nextEndDate =
+      body.endDate !== undefined
+        ? body.endDate
+          ? new Date(body.endDate)
+          : null
+        : existing.endDate;
 
     if (!nextSource || !nextDestination) {
       return NextResponse.json(
@@ -104,6 +122,9 @@ export async function PATCH(request, { params }) {
         vehicleId: nextVehicleId,
         driverId: nextDriverId,
         plannedDistance: nextPlannedDistance,
+        scheduledDate: nextScheduledDate,
+        startDate: nextStartDate,
+        endDate: nextEndDate,
       },
       include: tripInclude,
     });

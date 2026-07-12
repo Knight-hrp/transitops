@@ -32,6 +32,9 @@ function NewTripForm() {
     destination: "",
     cargoWeight: "",
     plannedDistance: "",
+    scheduledDate: "",
+    startDate: "",
+    endDate: "",
     vehicleId: "",
     driverId: "",
   });
@@ -120,6 +123,9 @@ function NewTripForm() {
           plannedDistance: form.plannedDistance
             ? Number(form.plannedDistance)
             : undefined,
+          scheduledDate: form.scheduledDate || undefined,
+          startDate: form.startDate || undefined,
+          endDate: form.endDate || undefined,
           vehicleId: form.vehicleId ? Number(form.vehicleId) : undefined,
           driverId: form.driverId ? Number(form.driverId) : undefined,
         }),
@@ -204,6 +210,33 @@ function NewTripForm() {
                   onChange={(e) => updateField("plannedDistance", e.target.value)}
                   className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 placeholder:text-zinc-400 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
                   placeholder="150"
+                />
+              </label>
+              <label className="block text-sm">
+                <span className="mb-1 block font-medium text-zinc-700">Scheduled Date</span>
+                <input
+                  type="date"
+                  value={form.scheduledDate}
+                  onChange={(e) => updateField("scheduledDate", e.target.value)}
+                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
+                />
+              </label>
+              <label className="block text-sm">
+                <span className="mb-1 block font-medium text-zinc-700">Start Date</span>
+                <input
+                  type="date"
+                  value={form.startDate}
+                  onChange={(e) => updateField("startDate", e.target.value)}
+                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
+                />
+              </label>
+              <label className="block text-sm">
+                <span className="mb-1 block font-medium text-zinc-700">End Date</span>
+                <input
+                  type="date"
+                  value={form.endDate}
+                  onChange={(e) => updateField("endDate", e.target.value)}
+                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
                 />
               </label>
             </div>

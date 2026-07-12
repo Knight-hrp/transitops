@@ -41,8 +41,18 @@ export async function POST(request) {
     if (error) return error;
 
     const body = await request.json();
-    const { source, destination, cargoWeight, vehicleId, driverId, plannedDistance, revenue } =
-      body;
+    const {
+      source,
+      destination,
+      cargoWeight,
+      vehicleId,
+      driverId,
+      plannedDistance,
+      revenue,
+      scheduledDate,
+      startDate,
+      endDate,
+    } = body;
 
     if (!source?.trim() || !destination?.trim()) {
       return NextResponse.json(
@@ -76,6 +86,9 @@ export async function POST(request) {
         destination: destination.trim(),
         cargoWeight,
         plannedDistance: plannedDistance || null,
+        scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
+        startDate: startDate ? new Date(startDate) : null,
+        endDate: endDate ? new Date(endDate) : null,
         revenue: revenue || 0,
         vehicleId: Number(vehicleId),
         driverId: Number(driverId),

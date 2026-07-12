@@ -51,7 +51,10 @@ export async function POST(_request, { params }) {
       }
       return tx.trip.update({
         where: { id: tripId },
-        data: { status: TRIP_STATUS.COMPLETED },
+        data: {
+          status: TRIP_STATUS.COMPLETED,
+          endDate: trip.endDate ?? new Date(),
+        },
         include: tripInclude,
       });
     });

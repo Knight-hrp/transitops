@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { serializeVehicle } from "@/lib/constants";
+import { requireRole } from "@/lib/api-auth";
+
+const TRIP_ROLES = ["Dispatcher"];
 
 export async function GET() {
   try {
+    const { error } = await requireRole(TRIP_ROLES);
+    if (error) return error;
+
     const openMaintenance = await prisma.maintenanceLog.findMany({
       where: { NOT: { status: "Completed" } },
       select: { vehicleId: true },
