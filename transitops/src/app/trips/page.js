@@ -3,8 +3,11 @@ import AppNav from "@/components/AppNav";
 import StatusBadge from "@/components/StatusBadge";
 import { serializeTrip } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
+import { getSessionUser } from "@/lib/api-auth";
 
 export const dynamic = "force-dynamic";
+
+const TRIP_ROLES = ["Dispatcher"];
 
 async function getTrips() {
   const trips = await prisma.trip.findMany({
@@ -15,6 +18,36 @@ async function getTrips() {
 }
 
 export default async function TripsPage() {
+  const user = await getSessionUser();
+
+  if (!user || !TRIP_ROLES.includes(user.role)) {
+    return (
+      <div className="min-h-screen bg-zinc-50">
+        <AppNav />
+        <main className="mx-auto flex max-w-3xl flex-col items-center px-4 py-20 text-center">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-10 shadow-sm">
+            <h1 className="text-xl font-semibold text-red-800">
+              {user ? "Access denied" : "Sign in required"}
+            </h1>
+            <p className="mt-2 text-sm text-red-700">
+              {user
+                ? `Your role (${user.role}) does not have permission to access trip management. This area is restricted to ${TRIP_ROLES.join(
+                    " / ",
+                  )}.`
+                : "You must be logged in as a Dispatcher to access trip management."}
+            </p>
+            <Link
+              href={user ? "/dashboard" : "/login"}
+              className="mt-5 inline-block rounded-lg border border-red-300 bg-white px-5 py-2.5 text-sm font-medium text-red-700 hover:bg-red-100"
+            >
+              {user ? "Back to dashboard" : "Go to login"}
+            </Link>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   const trips = await getTrips();
 
   return (

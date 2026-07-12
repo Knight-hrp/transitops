@@ -5,8 +5,19 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import AppNav from "@/components/AppNav";
 import StatusBadge from "@/components/StatusBadge";
+import RoleGuard from "@/components/RoleGuard";
+
+const TRIP_ROLES = ["Dispatcher"];
 
 export default function TripDetailPage() {
+  return (
+    <RoleGuard allow={TRIP_ROLES}>
+      <TripDetail />
+    </RoleGuard>
+  );
+}
+
+function TripDetail() {
   const { id } = useParams();
   const router = useRouter();
   const [trip, setTrip] = useState(null);

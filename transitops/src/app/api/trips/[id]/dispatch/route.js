@@ -11,11 +11,16 @@ import {
   formatValidationResponse,
   validateTripAssignment,
 } from "@/lib/trip-validations";
+import { requireRole } from "@/lib/api-auth";
 
 const tripInclude = { vehicle: true, driver: true };
+const TRIP_ROLES = ["Dispatcher"];
 
 export async function POST(_request, { params }) {
   try {
+    const { error } = await requireRole(TRIP_ROLES);
+    if (error) return error;
+
     const { id } = await params;
     const tripId = Number(id);
 

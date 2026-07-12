@@ -4,8 +4,19 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AppNav from "@/components/AppNav";
+import RoleGuard from "@/components/RoleGuard";
+
+const TRIP_ROLES = ["Dispatcher"];
 
 export default function NewTripPage() {
+  return (
+    <RoleGuard allow={TRIP_ROLES}>
+      <NewTripForm />
+    </RoleGuard>
+  );
+}
+
+function NewTripForm() {
   const router = useRouter();
   const [vehicles, setVehicles] = useState([]);
   const [drivers, setDrivers] = useState([]);
