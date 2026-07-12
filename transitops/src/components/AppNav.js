@@ -57,7 +57,7 @@ export default function AppNav() {
     .filter(Boolean);
 
   return (
-    <header className="border-b border-zinc-200 bg-white">
+    <header className="border-b border-zinc-200 bg-white/90 backdrop-blur-md sticky top-0 z-50 shadow-sm">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4">
         <Link href="/" className="text-lg font-semibold text-zinc-900">
           TransitOps

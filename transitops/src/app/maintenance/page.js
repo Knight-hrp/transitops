@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useRef } from "react";
+import AppNav from "@/components/AppNav";
 
 const emptyForm = {
   vehicleId: "",
@@ -277,8 +278,9 @@ export default function Maintenance() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-7xl px-8 py-10">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <AppNav />
+      <div className="mx-auto max-w-7xl px-8 py-10 flex-1">
         <div className="mb-8 flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div>
             <h1 className="text-4xl font-bold text-slate-800">Maintenance</h1>
